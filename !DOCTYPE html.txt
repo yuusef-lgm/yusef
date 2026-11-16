@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRONFORGE — High-Performance Training Studio</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --bg-2:#111111;
+    --bg-3:#1a1a1a;
+    --fg:#f0f0f0;
+    --muted:#7a7a7a;
+    --muted-2:#4a4a4a;
+    --accent:#ff4500;
+    --accent-2:#ff6b1a;
+    --silver:#c4c8d0;
+    --silver-dark:#8a8e96;
+    --border:rgba(255,255,255,0.08);
+    --border-2:rgba(255,255,255,0.15);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:400;
+    overflow-x:hidden;
+    letter-spacing:0.01em;
+  }
+  .font-display{font-family:'Anton',sans-serif;letter-spacing:0.01em}
+  .font-mono{font-family:'JetBrains Mono',monospace}
+  
+  /* Grain overlay */
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    opacity:0.08;
+    pointer-events:none;
+    z-index:1000;
+    mix-blend-mode:overlay;
+  }
+  
+  /* Vignette */
+  body::after{
+    content:'';
+    position:fixed;
+    inset:0;
+    background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4));
+    pointer-events:none;
+    z-index:999;
+  }
+  
+  /* B&W image filter */
+  .bw{filter:grayscale(100%) contrast(1.15) brightness(0.82)}
+  .bw-soft{filter:grayscale(85%) contrast(1.1) brightness(0.85)}
+  
+  /* Marquee */
+  @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+  .marquee-track{animation:marquee 40s linear infinite;will-change:transform}
+  .marquee-fast{animation:marquee 25s linear infinite}
+  
+  /* Text stroke */
+  .text-stroke{-webkit-text-stroke:1.5px var(--silver);color:transparent}
+  .text-stroke-orange{-webkit-text-stroke:2px var(--accent);color:transparent}
+  .text-stroke-thin{-webkit-text-stroke:1px var(--silver-dark);color:transparent}
+  
+  /* Silver gradient text */
+  .silver-text{
+    background:linear-gradient(135deg,#e8eaed 0%,#9ea2aa 40%,#d4d7dd 60%,#7a7e86 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  
+  /* Grid backgrounds */
+  .bg-grid{
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
+    background-size:48px 48px;
+  }
+  .bg-grid-fine{
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);
+    background-size:20px 20px;
+  }
+  .bg-diag{
+    background-image:repeating-linear-gradient(45deg,transparent,transparent 12px,rgba(255,255,255,0.02) 12px,rgba(255,255,255,0.02) 13px);
+  }
+  
+  /* Glow */
+  .glow-orange{box-shadow:0 0 30px rgba(255,69,0,0.5),0 0 60px rgba(255,69,0,0.25)}
+  .text-glow{text-shadow:0 0 40px rgba(255,69,0,0.4),0 0 80px rgba(255,69,0,0.2)}
+  
+  /* Button */
+  .btn-primary{
+    background:var(--accent);
+    color:#0a0a0a;
+    position:relative;
+    overflow:hidden;
+    transition:all 0.3s;
+  }
+  .btn-primary::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:#fff;
+    transform:translateY(101%);
+    transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  .btn-primary:hover::before{transform:translateY(0)}
+  .btn-primary>*{position:relative;z-index:1}
+  .btn-primary:hover{color:#0a0a0a}
+  
+  .btn-outline{
+    border:1px solid var(--border-2);
+    color:var(--fg);
+    transition:all 0.3s;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-outline::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:var(--accent);
+    transform:translateX(-101%);
+    transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  .btn-outline:hover::before{transform:translateX(0)}
+  .btn-outline>*{position:relative;z-index:1}
+  .btn-outline:hover{color:#0a0a0a;border-color:var(--accent)}
+  
+  /* Nav link */
+  .nav-link{position:relative;padding:4px 0}
+  .nav-link::after{
+    content:'';
+    position:absolute;
+    bottom:-2px;left:0;
+    width:100%;height:1px;
+    background:var(--accent);
+    transform:scaleX(0);
+    transform-origin:right;
+    transition:transform 0.3s;
+  }
+  .nav-link:hover::after,.nav-link.active::after{transform:scaleX(1);transform-origin:left}
+  
+  /* Pulse dot */
+  @keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,69,0,0.6)}50%{opacity:0.6;box-shadow:0 0 0 8px rgba(255,69,0,0)}}
+  .pulse-dot{animation:pulse-dot 2s infinite}
+  
+  /* Coach card */
+  .coach-card{position:relative;overflow:hidden;cursor:pointer}
+  .coach-card .overlay{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.3) 60%,transparent 100%);
+    opacity:0.6;
+    transition:opacity 0.4s;
+  }
+  .coach-card:hover .overlay{opacity:0.95}
+  .coach-card img{transition:transform 0.6s cubic-bezier(0.4,0,0.2,1),filter 0.4s}
+  .coach-card:hover img{transform:scale(1.08);filter:grayscale(0%) contrast(1.1) brightness(1)}
+  .coach-card .info{transform:translateY(20px);transition:transform 0.4s;opacity:0.85}
+  .coach-card:hover .info{transform:translateY(0);opacity:1}
+  
+  /* Goal card */
+  .goal-card{
+    position:relative;
+    overflow:hidden;
+    transition:all 0.4s cubic-bezier(0.4,0,0.2,1);
+    border:1px solid var(--border);
+  }
+  .goal-card::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:3px;
+    background:var(--accent);
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.4s;
+  }
+  .goal-card:hover::before{transform:scaleX(1)}
+  .goal-card:hover{border-color:var(--border-2);background:var(--bg-2)}
+  .goal-card .goal-img{transition:transform 0.6s,filter 0.4s}
+  .goal-card:hover .goal-img{transform:scale(1.05);filter:grayscale(0%)}
+  
+  /* Reveal */
+  .reveal{opacity:0;transform:translateY(30px);transition:all 0.9s cubic-bezier(0.4,0,0.2,1)}
+  .reveal.in{opacity:1;transform:translateY(0)}
+  
+  /* Vertical text */
+  .vertical-text{writing-mode:vertical-rl;text-orientation:mixed}
+  
+  /* Section label */
+  .section-label{
+    display:inline-flex;
+    align-items:center;
+    gap:12px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.25em;
+    color:var(--accent);
+    text-transform:uppercase;
+  }
+  .section-label::before{
+    content:'';
+    width:32px;height:1px;
+    background:var(--accent);
+  }
+  
+  /* Form */
+  input,select,textarea{
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--border-2);
+    color:var(--fg);
+    padding:14px 0;
+    width:100%;
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:1.1rem;
+    letter-spacing:0.05em;
+    transition:border-color 0.3s;
+  }
+  input:focus,select:focus,textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+  input::placeholder{color:var(--muted-2)}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ff4500' d='M6 9L1 4h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right center}
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--accent)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--accent-2)}
+  
+  /* Progress */
+  @keyframes loadbar{0%{width:0}100%{width:100%}}
+  
+  /* Spin */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin-slow{animation:spin 30s linear infinite}
+  
+  /* Float */
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .float{animation:float 5s ease-in-out infinite}
+  
+  /* Tag */
+  .tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border:1px solid var(--border-2);
+    font-size:10px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--muted);
+  }
+  .tag-accent{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:rgba(255,69,0,0.05);
+  }
+  
+  /* Story card */
+  .story-card{
+    position:relative;
+    overflow:hidden;
+    transition:all 0.4s;
+  }
+  .story-card:hover{transform:translateY(-4px)}
+  .story-card .story-img{transition:transform 0.6s}
+  .story-card:hover .story-img{transform:scale(1.05)}
+  
+  /* Schedule row */
+  .schedule-row{transition:background 0.2s}
+  .schedule-row:hover{background:rgba(255,69,0,0.05)}
+  
+  /* Number badge */
+  .num-badge{
+    font-family:'Anton',sans-serif;
+    -webkit-text-stroke:1px var(--silver-dark);
+    color:transparent;
+    line-height:1;
+  }
+  
+  /* Custom cursor area highlight */
+  .highlight-area{position:relative}
+  .highlight-area::before{
+    content:'';
+    position:absolute;
+    inset:-20px;
+    background:radial-gradient(circle,rgba(255,69,0,0.08),transparent 70%);
+    pointer-events:none;
+  }
+  
+  /* Diagonal stripe */
+  .stripe-bg{
+    background-image:repeating-linear-gradient(135deg,#ff4500 0,#ff4500 2px,transparent 2px,transparent 12px);
+  }
+  
+  /* Numbered list */
+  .num-list-item{
+    position:relative;
+    padding-left:48px;
+  }
+  .num-list-item::before{
+    content:attr(data-num);
+    position:absolute;
+    left:0;top:0;
+    font-family:'Anton',sans-serif;
+    font-size:2rem;
+    color:var(--accent);
+    line-height:1;
+  }
+</style>
+</head>
+<body>
+
+<!-- Scroll Progress Bar -->
+<div class="fixed top-0 left-0 right-0 h-0.5 bg-transparent z-[100]">
+  <div id="scrollProgress" class="h-full bg-[var(--accent)]" style="width:0%"></div>
+</div>
+
+<!-- Navigation -->
+<nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <div class="w-9 h-9 bg-[var(--accent)] flex items-center justify-center">
+          <span class="font-display text-black text-2xl">I</span>
+        </div>
+        <div class="absolute -inset-1 border border-[var(--accent)] opacity-50"></div>
+      </div>
+      <div>
+        <div class="font-display text-2xl tracking-wider leading-none">IRONFORGE</div>
+        <div class="font-mono text-[9px] text-zinc-500 tracking-[0.3em] mt-0.5">EST. 2014 · DOWNTOWN</div>
+      </div>
+    </div>
+    <div class="hidden lg:flex items-center gap-10 text-[13px] tracking-[0.15em] uppercase font-medium">
+      <a href="#hero" class="nav-link active">Home</a>
+      <a href="#curriculum" class="nav-link">Programs</a>
+      <a href="#coaches" class="nav-link">Coaches</a>
+      <a href="#stories" class="nav-link">Stories</a>
+      <a href="#schedule" class="nav-link">Schedule</a>
+      <a href="#booking" class="nav-link">Contact</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 text-[11px] font-mono text-zinc-400">
+        <span class="w-1.5 h-1.5 bg-[var(--accent)] rounded-full pulse-dot"></span>
+        <span>142 TRAINING NOW</span>
+      </div>
+      <a href="#booking" class="btn-primary px-6 py-3 font-bold uppercase tracking-wider text-xs">
+        <span>Book Free Trial</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Side Rail -->
+<div class="fixed left-4 top-1/2 -translate-y-1/2 z-40 hidden xl:flex flex-col items-center gap-3">
+  <div class="vertical-text font-mono text-[10px] tracking-[0.35em] text-zinc-600">EST · 2014 · DOWNTOWN · 24/7</div>
+  <div class="w-px h-12 bg-zinc-700"></div>
+  <div class="font-mono text-[10px] text-[var(--accent)]">N 40.7128°</div>
+</div>
+
+<div class="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden xl:flex flex-col items-center gap-3">
+  <div class="font-mono text-[10px] text-zinc-600">01</div>
+  <div class="w-px h-8 bg-zinc-700"></div>
+  <div class="font-mono text-[10px] text-zinc-600">02</div>
+  <div class="w-px h-8 bg-zinc-700"></div>
+  <div class="font-mono text-[10px] text-zinc-600">03</div>
+  <div class="w-px h-8 bg-zinc-700"></div>
+  <div class="font-mono text-[10px] text-zinc-600">04</div>
+</div>
+
+<!-- ============== HERO ============== -->
+<section id="hero" class="relative min-h-screen pt-20 bg-grid overflow-hidden">
+  
+  <!-- Live ticker -->
+  <div class="border-y border-white/5 py-2.5 overflow-hidden bg-zinc-950/60">
+    <div class="marquee-track flex gap-12 whitespace-nowrap font-mono text-[11px] tracking-wider text-zinc-400">
+      <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-[var(--accent)] rounded-full pulse-dot"></span>LIVE · HIIT BLAST W/ COACH MARCUS · STUDIO B</span>
+      <span>·</span>
+      <span>NEXT CLASS · 14:30 · POWERLIFTING FUNDAMENTALS</span>
+      <span>·</span>
+      <span>142 MEMBERS TRAINING NOW · 4 STUDIOS ACTIVE</span>
+      <span>·</span>
+      <span>NEW PROGRAM · OLYMPIC LIFTING CYCLE OPENS MON</span>
+      <span>·</span>
+      <span>MEMBER SPOTLIGHT · JAMES K. · -18KG IN 12 WEEKS</span>
+      <span>·</span>
+      <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-[var(--accent)] rounded-full pulse-dot"></span>LIVE · HIIT BLAST W/ COACH MARCUS · STUDIO B</span>
+      <span>·</span>
+      <span>NEXT CLASS · 14:30 · POWERLIFTING FUNDAMENTALS</span>
+      <span>·</span>
+      <span>142 MEMBERS TRAINING NOW · 4 STUDIOS ACTIVE</span>
+      <span>·</span>
+      <span>NEW PROGRAM · OLYMPIC LIFTING CYCLE OPENS MON</span>
+      <span>·</span>
+      <span>MEMBER SPOTLIGHT · JAMES K. · -18KG IN 12 WEEKS</span>
+    </div>
+  </div>
+
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10 pt-10 pb-6">
+    <div class="grid grid-cols-12 gap-6">
+      
+      <!-- Left: Text -->
+      <div class="col-span-12 lg:col-span-7 flex flex-col justify-between min-h-[80vh]">
+        <div>
+          <div class="flex items-center justify-between mb-8">
+            <div class="section-label"><span>S01 · BRAND ATTITUDE</span></div>
+            <div class="hidden md:flex items-center gap-3 font-mono text-[10px] text-zinc-500">
+              <span>SCROLL TO EXPLORE</span>
+              <i class="fa-solid fa-arrow-down"></i>
+            </div>
+          </div>
+          
+          <h1 class="font-display text-[clamp(4.5rem,13vw,12rem)] leading-[0.82] text-glow">
+            BUILT<br>
+            NOT<br>
+            <span class="text-stroke-orange">BORN.</span>
+          </h1>
+          
+          <div class="grid grid-cols-12 gap-6 mt-10">
+            <div class="col-span-12 md:col-span-7">
+              <p class="text-zinc-300 text-lg leading-relaxed">
+                Ironforge isn't a gym. It's a discipline — engineered by certified coaches, proven by 12,000+ transformations, and built for people who refuse average. Train under the same protocols used by national athletes and special operators.
+              </p>
+              <div class="flex flex-wrap gap-2 mt-5">
+                <span class="tag tag-accent">NSCA CERTIFIED</span>
+                <span class="tag">NASM AFFILIATED</span>
+                <span class="tag">PRECISION NUTRITION LVL 2</span>
+              </div>
+            </div>
+            <div class="col-span-12 md:col-span-5 space-y-4 border-l border-white/10 pl-6">
+              <div>
+                <div class="font-display text-5xl text-[var(--accent)] leading-none stat-number" data-target="12480">0</div>
+                <div class="text-[11px] text-zinc-500 uppercase tracking-[0.2em] mt-1">Members transformed</div>
+              </div>
+              <div>
+                <div class="font-display text-5xl silver-text leading-none stat-number" data-target="28">0</div>
+                <div class="text-[11px] text-zinc-500 uppercase tracking-[0.2em] mt-1">Elite certified coaches</div>
+              </div>
+              <div>
+                <div class="font-display text-5xl text-zinc-300 leading-none stat-number" data-target="11">0</div>
+                <div class="text-[11px] text-zinc-500 uppercase tracking-[0.2em] mt-1">Years of methodology</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex flex-wrap gap-3 mt-10">
+          <a href="#booking" class="btn-primary px-8 py-4 font-bold uppercase tracking-[0.15em] text-sm flex items-center gap-3">
+            <span>Book Free Trial Class</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
+          <a href="#curriculum" class="btn-outline px-8 py-4 font-bold uppercase tracking-[0.15em] text-sm flex items-center gap-3">
+            <span>Explore Programs</span>
+            <i class="fa-solid fa-plus"></i>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Right: Coach grid -->
+      <div class="col-span-12 lg:col-span-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-mono text-[10px] text-zinc-500 tracking-[0.25em]">COACH ROSTER · 06 OF 28</div>
+          <a href="#coaches" class="font-mono text-[10px] text-[var(--accent)] tracking-[0.25em] hover:underline">VIEW ALL →</a>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="aspect-[3/4] overflow-hidden bg-zinc-900 coach-card">
+            <img src="https://picsum.photos/seed/forge-c1/300/400.jpg" class="w-full h-full object-cover bw" alt="Coach Marcus">
+            <div class="overlay"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-3 info">
+              <div class="font-mono text-[9px] text-[var(--accent)] tracking-wider">#01 HEAD COACH</div>
+              <div class="font-display text-lg leading-tight">MARCUS R.</div>
+              <div class="text-[10px] text-zinc-400">Powerlifting · 12y</div>
+            </div>
+          </div>
+          <div class="aspect-[3/4] overflow-hidden bg-zinc-900 coach-card">
+            <img src="https://picsum.photos/seed/forge-c2/300/400.jpg" class="w-full h-full object-cover bw" alt="Coach Elena">
+            <div class="overlay"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-3 info">
+              <div class="font-mono text-[9px] text-[var(--accent)] tracking-wider">#02 STRENGTH</div>
+              <div class="font-display text-lg leading-tight">ELENA V.</div>
+              <div class="text-[10px] text-zinc-400">Olympic Lifting · 9y</div>
+            </div>
+          </div>
+          <div class="aspect-[3/4] overflow-hidden bg-zinc-900 coach-card">
+            <img src="https://picsum.photos/seed/forge-c3/300/400.jpg" class="w-full h-full object-cover bw" alt="Coach Kai">
+            <div class="overlay"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-3 info">
+              <div class="font-mono text-[9px] text-[var(--accent)] tracking-wider">#03 CONDITIONING</div>
+              <div class="font-display text-lg leading-tight">KAI T.</div>
+              <div class="text-[10px] text-zinc-400">HIIT · 7y</div>
+            </div>
+          </div>
+          <div class="aspect-[3/4] overflow-hidden bg-zinc-900 coach-card">
+            <img src="https://picsum.photos/seed/forge-c4/300/400.jpg" class="w-full h-full object-cover bw" alt="Coach Sofia">
+            <div class="overlay"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-3 info">
+              <div class="font-mono text-[9px] text-[var(--accent)] tracking-wider">#04 NUTRITION</div>
+              <div class="font-display text-lg leading-tight">SOFIA L.</div>
+              <div class="text-[10px] text-zinc-400">PN Lvl 2 · 10y</div>
+            </div>
+          </div>
+          <div class="aspect-[3/4] overflow-hidden bg-zinc-900 coach-card">
+            <img src="https://picsum.photos/seed/forge-c5/300/400.jpg" class="w-full h-full object-cover bw" alt="Coach Devon">
+            <div class="overlay"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-3 info">
+              <div class="font-mono text-[9px] text-[var(--accent)] tracking-wider">#05 MOBILITY</div>
+              <div class="font-display text-lg leading-tight">DEVON M.</div>
+              <div class="text-[10px] text-zinc-400">FRC · 8y</div>
+            </div>
+          </div>
+          <div class="aspect-[3/4] overflow-hidden bg-zinc-900 coach-card relative">
+            <img src="https://picsum.photos/seed/forge-c6/300/400.jpg" class="w-full h-full object-cover bw" alt="Coach Yuki">
+            <div class="overlay"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-3 info">
+              <div class="font-mono text-[9px] text-[var(--accent)] tracking-wider">#06 HYPERTROPHY</div>
+              <div class="font-display text-lg leading-tight">YUKI H.</div>
+              <div class="text-[10px] text-zinc-400">Bodybuilding · 11y</div>
+            </div>
+            <div class="absolute top-3 right-3 bg-[var(--accent)] text-black font-mono text-[9px] px-1.5 py-0.5 tracking-wider">+22 MORE</div>
+          </div>
+        </div>
+        
+        <!-- Today's schedule preview -->
+        <div class="mt-4 border border-white/10 bg-zinc-950/50 p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 bg-[var(--accent)] rounded-full pulse-dot"></span>
+              <span class="font-mono text-[10px] text-zinc-400 tracking-[0.2em]">TODAY'S LIVE SESSIONS</span>
+            </div>
+            <span class="font-mono text-[10px] text-zinc-600">MON · 18.03</span>
+          </div>
+          <div class="space-y-1.5 text-sm">
+            <div class="schedule-row flex items-center justify-between py-1.5 px-2 -mx-2 cursor-pointer">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-xs text-[var(--accent)] w-12">06:30</span>
+                <span class="text-zinc-300">Sunrise Conditioning</span>
+              </div>
+              <span class="text-[10px] text-zinc-600 font-mono">STUDIO A</span>
+            </div>
+            <div class="schedule-row flex items-center justify-between py-1.5 px-2 -mx-2 cursor-pointer">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-xs text-[var(--accent)] w-12">12:00</span>
+                <span class="text-zinc-300">Lunch Express HIIT</span>
+              </div>
+              <span class="text-[10px] text-zinc-600 font-mono">STUDIO B</span>
+            </div>
+            <div class="schedule-row flex items-center justify-between py-1.5 px-2 -mx-2 cursor-pointer bg-[var(--accent)]/10">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-xs text-[var(--accent)] w-12">14:30</span>
+                <span class="text-zinc-300">Powerlifting Fundamentals</span>
+                <span class="w-1.5 h-1.5 bg-[var(--accent)] rounded-full pulse-dot"></span>
+              </div>
+              <span class="text-[10px] text-[var(--accent)] font-mono">LIVE NOW</span>
+            </div>
+            <div class="schedule-row flex items-center justify-between py-1.5 px-2 -mx-2 cursor-pointer">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-xs text-zinc-500 w-12">18:00</span>
+                <span class="text-zinc-400">Hypertrophy Block</span>
+              </div>
+              <span class="text-[10px] text-zinc-600 font-mono">STUDIO C</span>
+            </div>
+            <div class="schedule-row flex items-center justify-between py-1.5 px-2 -mx-2 cursor-pointer">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-xs text-zinc-500 w-12">19:30</span>
+                <span class="text-zinc-400">Mobility & Recovery</span>
+              </div>
+              <span class="text-[10px] text-zinc-600 font-mono">STUDIO D</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bottom marquee -->
+  <div class="overflow-hidden border-t border-white/5 py-5 mt-4 relative">
+    <div class="marquee-track flex gap-10 whitespace-nowrap items-center">
+      <span class="font-display text-5xl text-zinc-800">DISCIPLINE</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl text-stroke-thin">STRENGTH</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl silver-text">COMMUNITY</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl text-zinc-800">PROTOCOL</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl text-stroke-thin">RESULTS</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl silver-text">DISCIPLINE</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl text-zinc-800">STRENGTH</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl text-stroke-thin">COMMUNITY</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl silver-text">PROTOCOL</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+      <span class="font-display text-5xl text-zinc-800">RESULTS</span>
+      <span class="font-display text-3xl text-[var(--accent)]">●</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============== STATS STRIP ============== -->
+<section class="border-y border-white/10 bg-zinc-950 py-6">
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-px">
+    <div class="px-4 py-3 border-r border-white/5">
+      <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">FACILITY</div>
+      <div class="font-display text-2xl mt-1">2,400 m²</div>
+    </div>
+    <div class="px-4 py-3 border-r border-white/5">
+      <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">STUDIOS</div>
+      <div class="font-display text-2xl mt-1">04 Zones</div>
+    </div>
+    <div class="px-4 py-3 border-r border-white/5">
+      <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">EQUIPMENT</div>
+      <div class="font-display text-2xl mt-1">180+ Units</div>
+    </div>
+    <div class="px-4 py-3 border-r border-white/5">
+      <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">CLASSES / WK</div>
+      <div class="font-display text-2xl mt-1">68 Sessions</div>
+    </div>
+    <div class="px-4 py-3 border-r border-white/5">
+      <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">AVG TRANSFORM</div>
+      <div class="font-display text-2xl text-[var(--accent)] mt-1">12 WKS</div>
+    </div>
+    <div class="px-4 py-3">
+      <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">RETENTION</div>
+      <div class="font-display text-2xl silver-text mt-1">94.2%</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== CURRICULUM ============== -->
+<section id="curriculum" class="relative py-24 bg-grid-fine">
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10">
+    
+    <div class="grid grid-cols-12 gap-6 mb-12">
+      <div class="col-span-12 lg:col-span-4">
+        <div class="section-label mb-5"><span>S02 · CURRICULUM</span></div>
+        <h2 class="font-display text-6xl lg:text-7xl leading-[0.9]">
+          CHOOSE<br>
+          YOUR<br>
+          <span class="text-[var(--accent)]">BATTLEFIELD.</span>
+        </h2>
+      </div>
+      <div class="col-span-12 lg:col-span-5 lg:col-start-7 flex flex-col justify-end">
+        <p class="text-zinc-400 text-lg leading-relaxed">
+          Three pathways. One methodology. Every program at Ironforge is engineered around your goal — with periodized progression, accountability checkpoints, and coaches who've actually done it themselves.
+        </p>
+        <div class="flex items-center gap-6 mt-5 text-[11px] font-mono text-zinc-500 tracking-wider">
+          <div class="flex items-center gap-2"><i class="fa-solid fa-check text-[var(--accent)]"></i>PERIODIZED</div>
+          <div class="flex items-center gap-2"><i class="fa-solid fa-check text-[var(--accent)]"></i>COACH-LED</div>
+          <div class="flex items-center gap-2"><i class="fa-solid fa-check text-[var(--accent)]"></i>TRACKED</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Program cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-px bg-white/5 border border-white/5">
+      
+      <!-- Card 1: Muscle Gain -->
+      <article class="goal-card bg-[var(--bg)] p-8 group">
+        <div class="flex items-start justify-between mb-6">
+          <div>
+            <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.3em]">PROGRAM 01</div>
+            <div class="num-badge text-7xl mt-2 group-hover:text-[var(--accent)] transition-colors" style="-webkit-text-stroke-color:var(--accent)">01</div>
+          </div>
+          <div class="w-32 h-44 overflow-hidden">
+            <img src="https://picsum.photos/seed/forge-muscle/200/280.jpg" class="w-full h-full object-cover bw goal-img" alt="Muscle Gain">
+          </div>
+        </div>
+        
+        <h3 class="font-display text-4xl mb-2">HYPERTROPHY<br>BLOCK</h3>
+        <div class="tag tag-accent mb-4">MUSCLE GAIN</div>
+        <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+          Progressive overload protocols engineered for measurable muscle accrual. Eight-week mesocycles with built-in deload weeks and recovery audits.
+        </p>
+        
+        <div class="space-y-3 text-sm border-t border-white/10 pt-5">
+          <div class="flex justify-between"><span class="text-zinc-500">Duration</span><span class="text-zinc-200">12 weeks · 4 sessions/wk</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Intensity</span><span class="text-zinc-200">75–85% 1RM</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Volume</span><span class="text-zinc-200">18–22 sets / muscle / wk</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Equipment</span><span class="text-zinc-200">Free weights · Cables</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Lead Coach</span><span class="text-zinc-200">Yuki H. · 11y</span></div>
+        </div>
+        
+        <div class="mt-6 flex items-center justify-between">
+          <div class="text-2xl font-display">$480<span class="text-sm text-zinc-500 font-sans">/mo</span></div>
+          <a href="#booking" class="text-[var(--accent)] text-xs font-mono tracking-[0.2em] hover:underline flex items-center gap-2">ENROLL <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </article>
+      
+      <!-- Card 2: Fat Loss -->
+      <article class="goal-card bg-[var(--bg)] p-8 group">
+        <div class="flex items-start justify-between mb-6">
+          <div>
+            <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.3em]">PROGRAM 02</div>
+            <div class="num-badge text-7xl mt-2 group-hover:text-[var(--accent)] transition-colors" style="-webkit-text-stroke-color:var(--accent)">02</div>
+          </div>
+          <div class="w-32 h-44 overflow-hidden">
+            <img src="https://picsum.photos/seed/forge-fat/200/280.jpg" class="w-full h-full object-cover bw goal-img" alt="Fat Loss">
+          </div>
+        </div>
+        
+        <h3 class="font-display text-4xl mb-2">METABOLIC<br>FORGE</h3>
+        <div class="tag tag-accent mb-4">FAT LOSS</div>
+        <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+          High-density intervals paired with strength retention work. Designed to strip fat without sacrificing hard-earned muscle — backed by Precision Nutrition protocols.
+        </p>
+        
+        <div class="space-y-3 text-sm border-t border-white/10 pt-5">
+          <div class="flex justify-between"><span class="text-zinc-500">Duration</span><span class="text-zinc-200">8 weeks · 5 sessions/wk</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Intensity</span><span class="text-zinc-200">RPE 7–9</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Avg Loss</span><span class="text-zinc-200">5–9% body fat</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Equipment</span><span class="text-zinc-200">Sled · KB · Row</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Lead Coach</span><span class="text-zinc-200">Kai T. · 7y</span></div>
+        </div>
+        
+        <div class="mt-6 flex items-center justify-between">
+          <div class="text-2xl font-display">$420<span class="text-sm text-zinc-500 font-sans">/mo</span></div>
+          <a href="#booking" class="text-[var(--accent)] text-xs font-mono tracking-[0.2em] hover:underline flex items-center gap-2">ENROLL <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </article>
+      
+      <!-- Card 3: Fitness -->
+      <article class="goal-card bg-[var(--bg)] p-8 group">
+        <div class="flex items-start justify-between mb-6">
+          <div>
+            <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.3em]">PROGRAM 03</div>
+            <div class="num-badge text-7xl mt-2 group-hover:text-[var(--accent)] transition-colors" style="-webkit-text-stroke-color:var(--accent)">03</div>
+          </div>
+          <div class="w-32 h-44 overflow-hidden">
+            <img src="https://picsum.photos/seed/forge-fit/200/280.jpg" class="w-full h-full object-cover bw goal-img" alt="Fitness">
+          </div>
+        </div>
+        
+        <h3 class="font-display text-4xl mb-2">ATHLETIC<br>FOUNDATION</h3>
+        <div class="tag tag-accent mb-4">FITNESS</div>
+        <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+          Build the complete athlete — strength, conditioning, mobility, and recovery in one integrated system. Ideal for returners and long-game builders.
+        </p>
+        
+        <div class="space-y-3 text-sm border-t border-white/10 pt-5">
+          <div class="flex justify-between"><span class="text-zinc-500">Duration</span><span class="text-zinc-200">16 weeks · 3–4 sessions/wk</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Intensity</span><span class="text-zinc-200">Mixed Zone</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Focus</span><span class="text-zinc-200">GPP · Strength · Mobility</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Equipment</span><span class="text-zinc-200">Full facility access</span></div>
+          <div class="flex justify-between"><span class="text-zinc-500">Lead Coach</span><span class="text-zinc-200">Devon M. · 8y</span></div>
+        </div>
+        
+        <div class="mt-6 flex items-center justify-between">
+          <div class="text-2xl font-display">$360<span class="text-sm text-zinc-500 font-sans">/mo</span></div>
+          <a href="#booking" class="text-[var(--accent)] text-xs font-mono tracking-[0.2em] hover:underline flex items-center gap-2">ENROLL <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </article>
+    </div>
+    
+    <!-- Methodology strip -->
+    <div class="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/5 border border-white/5">
+      <div class="bg-[var(--bg)] p-6">
+        <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">PHASE 01</div>
+        <div class="font-display text-xl mt-1">ASSESS</div>
+        <div class="text-xs text-zinc-500 mt-1">Movement screen · body comp · goal audit</div>
+      </div>
+      <div class="bg-[var(--bg)] p-6">
+        <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">PHASE 02</div>
+        <div class="font-display text-xl mt-1">PROGRAM</div>
+        <div class="text-xs text-zinc-500 mt-1">Periodized plan · nutrition framework</div>
+      </div>
+      <div class="bg-[var(--bg)] p-6">
+        <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">PHASE 03</div>
+        <div class="font-display text-xl mt-1">EXECUTE</div>
+        <div class="text-xs text-zinc-500 mt-1">Coach-led sessions · form audits</div>
+      </div>
+      <div class="bg-[var(--bg)] p-6">
+        <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">PHASE 04</div>
+        <div class="font-display text-xl mt-1">ITERATE</div>
+        <div class="text-xs text-zinc-500 mt-1">Re-test · adjust · progress</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== COACHES ============== -->
+<section id="coaches" class="relative py-24 bg-[var(--bg-2)] bg-diag overflow-hidden">
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10">
+    
+    <div class="grid grid-cols-12 gap-6 mb-12">
+      <div class="col-span-12 lg:col-span-7">
+        <div class="section-label mb-5"><span>S03 · COACH ROSTER</span></div>
+        <h2 class="font-display text-6xl lg:text-7xl leading-[0.9]">
+          MENTORS<br>
+          NOT<br>
+          <span class="silver-text">INFLUENCERS.</span>
+        </h2>
+      </div>
+      <div class="col-span-12 lg:col-span-4 lg:col-start-9 flex flex-col justify-end">
+        <p class="text-zinc-400 leading-relaxed">
+          Every Ironforge coach holds a nationally accredited certification, a minimum 5-year competitive background, and a coaching internship under a senior mentor. No exceptions.
+        </p>
+      </div>
+    </div>
+    
+    <!-- Coach Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+      
+      <!-- Coach 1 -->
+      <div class="relative bg-zinc-900 overflow-hidden coach-card aspect-[3/4]">
+        <img src="https://picsum.photos/seed/coach-marcus/500/650.jpg" class="w-full h-full object-cover bw" alt="Marcus Rivera">
+        <div class="overlay"></div>
+        <div class="absolute top-4 left-4 right-4 flex items-start justify-between">
+          <span class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">01 / HEAD COACH</span>
+          <span class="font-mono text-[10px] text-zinc-400">12Y</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-5 info">
+          <div class="font-display text-2xl leading-tight">MARCUS RIVERA</div>
+          <div class="text-xs text-zinc-400 mt-1">Powerlifting · Strength</div>
+          <div class="mt-3 space-y-1 text-[11px]">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">NSCA-CSCS</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">USAPL Coach Lvl 2</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">Former National PL Athlete</span></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <span class="tag text-[9px]">SQUAT 285KG</span>
+            <span class="tag text-[9px]">DEAD 320KG</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Coach 2 -->
+      <div class="relative bg-zinc-900 overflow-hidden coach-card aspect-[3/4]">
+        <img src="https://picsum.photos/seed/coach-elena/500/650.jpg" class="w-full h-full object-cover bw" alt="Elena Volkov">
+        <div class="overlay"></div>
+        <div class="absolute top-4 left-4 right-4 flex items-start justify-between">
+          <span class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">02 / STRENGTH</span>
+          <span class="font-mono text-[10px] text-zinc-400">09Y</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-5 info">
+          <div class="font-display text-2xl leading-tight">ELENA VOLKOV</div>
+          <div class="text-xs text-zinc-400 mt-1">Olympic Weightlifting</div>
+          <div class="mt-3 space-y-1 text-[11px]">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">USAW Advanced Sport</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">FMS Lvl 2</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">National WL Bronze 2018</span></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <span class="tag text-[9px]">SNATCH 95KG</span>
+            <span class="tag text-[9px]">C&J 120KG</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Coach 3 -->
+      <div class="relative bg-zinc-900 overflow-hidden coach-card aspect-[3/4]">
+        <img src="https://picsum.photos/seed/coach-kai/500/650.jpg" class="w-full h-full object-cover bw" alt="Kai Tanaka">
+        <div class="overlay"></div>
+        <div class="absolute top-4 left-4 right-4 flex items-start justify-between">
+          <span class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">03 / CONDITIONING</span>
+          <span class="font-mono text-[10px] text-zinc-400">07Y</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-5 info">
+          <div class="font-display text-2xl leading-tight">KAI TANAKA</div>
+          <div class="text-xs text-zinc-400 mt-1">HIIT · Metabolic</div>
+          <div class="mt-3 space-y-1 text-[11px]">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">NASM-CPT</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">CrossFit Lvl 3</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">Ironman Finisher</span></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <span class="tag text-[9px]">VO2 68</span>
+            <span class="tag text-[9px]">5K 16:42</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Coach 4 -->
+      <div class="relative bg-zinc-900 overflow-hidden coach-card aspect-[3/4]">
+        <img src="https://picsum.photos/seed/coach-sofia/500/650.jpg" class="w-full h-full object-cover bw" alt="Sofia Laurent">
+        <div class="overlay"></div>
+        <div class="absolute top-4 left-4 right-4 flex items-start justify-between">
+          <span class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">04 / NUTRITION</span>
+          <span class="font-mono text-[10px] text-zinc-400">10Y</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-5 info">
+          <div class="font-display text-2xl leading-tight">SOFIA LAURENT</div>
+          <div class="text-xs text-zinc-400 mt-1">Nutrition · Recovery</div>
+          <div class="mt-3 space-y-1 text-[11px]">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">Precision Nutrition Lvl 2</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">RD, MS Sports Nutrition</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">Former IFBB Pro Card</span></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <span class="tag text-[9px]">1200+ CLIENTS</span>
+            <span class="tag text-[9px]">RD CERTIFIED</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Coach 5 -->
+      <div class="relative bg-zinc-900 overflow-hidden coach-card aspect-[3/4]">
+        <img src="https://picsum.photos/seed/coach-devon/500/650.jpg" class="w-full h-full object-cover bw" alt="Devon Mercer">
+        <div class="overlay"></div>
+        <div class="absolute top-4 left-4 right-4 flex items-start justify-between">
+          <span class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">05 / MOBILITY</span>
+          <span class="font-mono text-[10px] text-zinc-400">08Y</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-5 info">
+          <div class="font-display text-2xl leading-tight">DEVON MERCER</div>
+          <div class="text-xs text-zinc-400 mt-1">Mobility · Recovery</div>
+          <div class="mt-3 space-y-1 text-[11px]">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">FRC Mobility Specialist</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">DNS Exercise A</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">DPT Candidate</span></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <span class="tag text-[9px]">FRC CERT</span>
+            <span class="tag text-[9px]">DPT</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Coach 6 -->
+      <div class="relative bg-zinc-900 overflow-hidden coach-card aspect-[3/4]">
+        <img src="https://picsum.photos/seed/coach-yuki/500/650.jpg" class="w-full h-full object-cover bw" alt="Yuki Hayashi">
+        <div class="overlay"></div>
+        <div class="absolute top-4 left-4 right-4 flex items-start justify-between">
+          <span class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">06 / HYPERTROPHY</span>
+          <span class="font-mono text-[10px] text-zinc-400">11Y</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-5 info">
+          <div class="font-display text-2xl leading-tight">YUKI HAYASHI</div>
+          <div class="text-xs text-zinc-400 mt-1">Bodybuilding · Aesthetics</div>
+          <div class="mt-3 space-y-1 text-[11px]">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">IFBB Pro Card 2019</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">NASM PES</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">4x National Champion</span></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <span class="tag text-[9px]">82KG STAGE</span>
+            <span class="tag text-[9px]">7% BF</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Coach 7 -->
+      <div class="relative bg-zinc-900 overflow-hidden coach-card aspect-[3/4]">
+        <img src="https://picsum.photos/seed/coach-amara/500/650.jpg" class="w-full h-full object-cover bw" alt="Amara Okonkwo">
+        <div class="overlay"></div>
+        <div class="absolute top-4 left-4 right-4 flex items-start justify-between">
+          <span class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">07 / ENDURANCE</span>
+          <span class="font-mono text-[10px] text-zinc-400">06Y</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-5 info">
+          <div class="font-display text-2xl leading-tight">AMARA OKONKWO</div>
+          <div class="text-xs text-zinc-400 mt-1">Endurance · Run</div>
+          <div class="mt-3 space-y-1 text-[11px]">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">RRCA Certified</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">USATF Lvl 2</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-[var(--accent)] text-[10px]"></i><span class="text-zinc-300">Sub-2:50 Marathoner</span></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <span class="tag text-[9px]">42K 2:48</span>
+            <span class="tag text-[9px]">VO2 72</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Coach 8: CTA card -->
+      <div class="relative bg-zinc-950 border border-white/10 overflow-hidden aspect-[3/4] flex flex-col justify-between p-6 group hover:border-[var(--accent)] transition-colors">
+        <div>
+          <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em]">+ 20 MORE</div>
+          <div class="font-display text-3xl mt-3 leading-tight">JOIN THE<br>ROSTER.</div>
+          <p class="text-xs text-zinc-500 mt-3 leading-relaxed">We hire 1 in 47 applicants. Min. 5y coaching, accredited certification, competitive background required.</p>
+        </div>
+        <div>
+          <a href="#" class="flex items-center justify-between border-t border-white/10 pt-4 hover:text-[var(--accent)] transition-colors">
+            <span class="text-xs font-mono tracking-[0.2em]">CAREERS</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== MEMBER STORIES ============== -->
+<section id="stories" class="relative py-24 bg-[var(--bg)] overflow-hidden">
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10">
+    
+    <div class="grid grid-cols-12 gap-6 mb-12">
+      <div class="col-span-12 lg:col-span-7">
+        <div class="section-label mb-5"><span>S04 · MEMBER STORIES</span></div>
+        <h2 class="font-display text-6xl lg:text-7xl leading-[0.9]">
+          REAL PEOPLE.<br>
+          <span class="text-stroke-orange">REAL NUMBERS.</span>
+        </h2>
+      </div>
+      <div class="col-span-12 lg:col-span-4 lg:col-start-9 flex flex-col justify-end">
+        <p class="text-zinc-400 leading-relaxed">
+          No filters. No staged lighting. Just data from members who showed up, did the work, and let us track every rep. Verified by independent body composition scans.
+        </p>
+      </div>
+    </div>
+    
+    <!-- Featured story -->
+    <div class="grid grid-cols-12 gap-6 mb-6">
+      <div class="col-span-12 lg:col-span-6 relative aspect-[4/5] lg:aspect-auto overflow-hidden bg-zinc-900">
+        <img src="https://picsum.photos/seed/story-james/800/900.jpg" class="w-full h-full object-cover bw-soft" alt="James K.">
+        <div class="absolute top-5 left-5 right-5 flex items-start justify-between">
+          <span class="font-mono text-[10px] text-[var(--accent)] tracking-[0.2em] bg-black/60 px-2 py-1">FEATURED · 12 WEEKS</span>
+          <span class="font-mono text-[10px] text-zinc-300 bg-black/60 px-2 py-1">VERIFIED</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/70 to-transparent">
+          <div class="font-display text-4xl">JAMES K.</div>
+          <div class="text-zinc-400 text-sm">36 · Software Engineer · Member since 2023</div>
+        </div>
+      </div>
+      
+      <div class="col-span-12 lg:col-span-6 flex flex-col justify-between bg-zinc-950 border border-white/10 p-8">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <span class="tag tag-accent">FAT LOSS PROGRAM</span>
+            <span class="tag">COACH: KAI T.</span>
+          </div>
+          <blockquote class="font-display text-3xl leading-tight">
+            "I came in overweight, exhausted, and skeptical. Twelve weeks later I'm 18kg lighter, deadlifting twice my bodyweight, and I haven't felt this good since my twenties."
+          </blockquote>
+          <div class="mt-4 text-zinc-500 text-sm">— James K., verified transformation · tracked via InBody 770</div>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-px bg-white/5 mt-8 border border-white/5">
+          <div class="bg-zinc-950 p-5">
+            <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">WEIGHT</div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span class="font-display text-3xl text-zinc-300 line-through">96kg</span>
+              <i class="fa-solid fa-arrow-right text-[var(--accent)] text-xs"></i>
+              <span class="font-display text-3xl text-[var(--accent)]">78kg</span>
+            </div>
+          </div>
+          <div class="bg-zinc-950 p-5">
+            <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">BODY FAT</div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span class="font-display text-3xl text-zinc-300 line-through">28%</span>
+              <i class="fa-solid fa-arrow-right text-[var(--accent)] text-xs"></i>
+              <span class="font-display text-3xl text-[var(--accent)]">14%</span>
+            </div>
+          </div>
+          <div class="bg-zinc-950 p-5">
+            <div class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">DEADLIFT</div>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span class="font-display text-3xl text-zinc-300 line-through">60kg</span>
+              <i class="fa-solid fa-arrow-right text-[var(--accent)] text-xs"></i>
+              <span class="font-display text-3xl text-[var(--accent)]">160kg</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
+          <div class="border-l-2 border-[var(--accent)] pl-3">
+            <div class="text-zinc-500 text-[10px] font-mono tracking-wider">PROGRAM</div>
+            <div class="text-zinc-200">Metabolic Forge · 8wk</div>
+          </div>
+          <div class="border-l-2 border-[var(--accent)] pl-3">
+            <div class="text-zinc-500 text-[10px] font-mono tracking-wider">FREQUENCY</div>
+            <div class="text-zinc-200">5 sessions / week</div>
+          </div>
+          <div class="border-l-2 border-[var(--accent)] pl-3">
+            <div class="text-zinc-500 text-[10px] font-mono tracking-wider">DIET PROTOCOL</div>
+            <div class="text-zinc-200">Macro-tracked · 2,200 kcal</div>
+          </div>
+          <div class="border-l-2 border-[var(--accent)] pl-3">
+            <div class="text-zinc-500 text-[10px] font-mono tracking-wider">RECOVERY</div>
+            <div class="text-zinc-200">Sauna 3x · Sleep 7.5h</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Two smaller stories -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <div class="story-card bg-zinc-950 border border-white/10 p-6 flex gap-6">
+        <div class="w-32 h-44 shrink-0 overflow-hidden bg-zinc-900">
+          <img src="https://picsum.photos/seed/story-maria/200/300.jpg" class="w-full h-full object-cover bw story-img" alt="Maria S.">
+        </div>
+        <div class="flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="tag tag-accent text-[9px]">HYPERTROPHY</span>
+              <span class="tag text-[9px]">16 WEEKS</span>
+            </div>
+            <div class="font-display text-2xl">MARIA S.</div>
+            <div class="text-xs text-zinc-500">29 · Architect · Joined 2024</div>
+            <p class="text-sm text-zinc-400 mt-3 leading-relaxed">"I'd been lifting for years without progress. Ironforge's periodization broke my plateau in 6 weeks. First time I've enjoyed training."</p>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+            <div class="border border-white/10 py-2">
+              <div class="font-display text-xl text-[var(--accent)]">+4.2kg</div>
+              <div class="text-[9px] text-zinc-500 font-mono">LEAN MASS</div>
+            </div>
+            <div class="border border-white/10 py-2">
+              <div class="font-display text-xl text-[var(--accent)]">SQUAT 95→120</div>
+              <div class="text-[9px] text-zinc-500 font-mono">KG</div>
+            </div>
+            <div class="border border-white/10 py-2">
+              <div class="font-display text-xl text-[var(--accent)]">-3% BF</div>
+              <div class="text-[9px] text-zinc-500 font-mono">FAT</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="story-card bg-zinc-950 border border-white/10 p-6 flex gap-6">
+        <div class="w-32 h-44 shrink-0 overflow-hidden bg-zinc-900">
+          <img src="https://picsum.photos/seed/story-chen/200/300.jpg" class="w-full h-full object-cover bw story-img" alt="Chen W.">
+        </div>
+        <div class="flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="tag tag-accent text-[9px]">FOUNDATION</span>
+              <span class="tag text-[9px]">20 WEEKS</span>
+            </div>
+            <div class="font-display text-2xl">CHEN W.</div>
+            <div class="text-xs text-zinc-500">45 · Surgeon · Joined 2023</div>
+            <p class="text-sm text-zinc-400 mt-3 leading-relaxed">"At 45 with chronic back pain, I thought my athletic days were over. Devon rebuilt my movement from scratch. I'm pain-free and stronger than at 30."</p>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+            <div class="border border-white/10 py-2">
+              <div class="font-display text-xl text-[var(--accent)]">PAIN-FREE</div>
+              <div class="text-[9px] text-zinc-500 font-mono">FMS 14→17</div>
+            </div>
+            <div class="border border-white/10 py-2">
+              <div class="font-display text-xl text-[var(--accent)]">+12KG</div>
+              <div class="text-[9px] text-zinc-500 font-mono">DEADLIFT</div>
+            </div>
+            <div class="border border-white/10 py-2">
+              <div class="font-display text-xl text-[var(--accent)]">VO2 48→54</div>
+              <div class="text-[9px] text-zinc-500 font-mono">ML/KG/MIN</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Stats wall -->
+    <div class="mt-12 border border-white/10 bg-zinc-950 p-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        <div>
+          <div class="font-display text-4xl text-[var(--accent)] stat-number" data-target="12480">0</div>
+          <div class="text-[10px] text-zinc-500 font-mono tracking-wider mt-1">TOTAL TRANSFORMATIONS</div>
+        </div>
+        <div>
+          <div class="font-display text-4xl silver-text stat-number" data-target="94">0</div>
+          <div class="text-[10px] text-zinc-500 font-mono tracking-wider mt-1">% GOAL COMPLETION</div>
+        </div>
+        <div>
+          <div class="font-display text-4xl text-zinc-300 stat-number" data-target="68">0</div>
+          <div class="text-[10px] text-zinc-500 font-mono tracking-wider mt-1">AVG SESSIONS / MEMBER</div>
+        </div>
+        <div>
+          <div class="font-display text-4xl text-[var(--accent)] stat-number" data-target="87">0</div>
+          <div class="text-[10px] text-zinc-500 font-mono tracking-wider mt-1">% RETENTION RATE</div>
+        </div>
+        <div>
+          <div class="font-display text-4xl silver-text stat-number" data-target="4">0</div>
+          <div class="text-[10px] text-zinc-500 font-mono tracking-wider mt-1">.9 / 5 AVG SATISFACTION</div>
+        </div>
+        <div>
+          <div class="font-display text-4xl text-zinc-300 stat-number" data-target="142">0</div>
+          <div class="text-[10px] text-zinc-500 font-mono tracking-wider mt-1">CLASSES / MONTH</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== SCHEDULE PREVIEW ============== -->
+<section id="schedule" class="relative py-24 bg-[var(--bg-2)] bg-grid overflow-hidden">
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10">
+    
+    <div class="grid grid-cols-12 gap-6 mb-10">
+      <div class="col-span-12 lg:col-span-6">
+        <div class="section-label mb-5"><span>S05 · WEEKLY SCHEDULE</span></div>
+        <h2 class="font-display text-6xl leading-[0.9]">
+          SHOW UP.<br>
+          <span class="text-[var(--accent)]">EVERY WEEK.</span>
+        </h2>
+      </div>
+      <div class="col-span-12 lg:col-span-4 lg:col-start-9 flex items-end">
+        <div class="flex gap-2 flex-wrap">
+          <button class="px-4 py-2 bg-[var(--accent)] text-black font-mono text-xs tracking-wider">ALL</button>
+          <button class="px-4 py-2 border border-white/10 text-zinc-400 font-mono text-xs tracking-wider hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors">STRENGTH</button>
+          <button class="px-4 py-2 border border-white/10 text-zinc-400 font-mono text-xs tracking-wider hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors">CONDITIONING</button>
+          <button class="px-4 py-2 border border-white/10 text-zinc-400 font-mono text-xs tracking-wider hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors">MOBILITY</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Schedule table -->
+    <div class="border border-white/10 bg-zinc-950 overflow-hidden">
+      <div class="grid grid-cols-[80px_1fr_120px_120px_100px_80px] border-b border-white/10 bg-zinc-900/50 text-[10px] font-mono text-zinc-500 tracking-[0.2em] uppercase">
+        <div class="p-3">Time</div>
+        <div class="p-3">Session</div>
+        <div class="p-3 hidden md:block">Coach</div>
+        <div class="p-3 hidden md:block">Studio</div>
+        <div class="p-3 hidden lg:block">Level</div>
+        <div class="p-3 text-right">Spots</div>
+      </div>
+      
+      <div class="schedule-row grid grid-cols-[80px_1fr_120px_120px_100px_80px] border-b border-white/5 py-3 px-3 items-center text-sm hover:bg-[var(--accent)]/5">
+        <div class="font-mono text-[var(--accent)]">06:30</div>
+        <div><span class="text-zinc-200">Sunrise Conditioning</span><span class="text-zinc-600 ml-2 text-xs">· HIIT</span></div>
+        <div class="hidden md:block text-zinc-400 text-xs">Kai T.</div>
+        <div class="hidden md:block text-zinc-500 text-xs font-mono">A</div>
+        <div class="hidden lg:block text-zinc-500 text-xs">INT 2</div>
+        <div class="text-right text-xs text-zinc-500 font-mono">8/16</div>
+      </div>
+      
+      <div class="schedule-row grid grid-cols-[80px_1fr_120px_120px_100px_80px] border-b border-white/5 py-3 px-3 items-center text-sm bg-[var(--accent)]/10">
+        <div class="font-mono text-[var(--accent)]">14:30</div>
+        <div class="flex items-center gap-2"><span class="text-zinc-200">Powerlifting Fundamentals</span><span class="w-1.5 h-1.5 bg-[var(--accent)] rounded-full pulse-dot"></span><span class="text-[var(--accent)] text-xs font-mono">LIVE</span></div>
+        <div class="hidden md:block text-zinc-400 text-xs">Marcus R.</div>
+        <div class="hidden md:block text-zinc-500 text-xs font-mono">C</div>
+        <div class="hidden lg:block text-zinc-500 text-xs">BEG-INT</div>
+        <div class="text-right text-xs text-[var(--accent)] font-mono">12/12</div>
+      </div>
+      
+      <div class="schedule-row grid grid-cols-[80px_1fr_120px_120px_100px_80px] border-b border-white/5 py-3 px-3 items-center text-sm hover:bg-[var(--accent)]/5">
+        <div class="font-mono text-[var(--accent)]">17:00</div>
+        <div><span class="text-zinc-200">Olympic Lifting Lab</span><span class="text-zinc-600 ml-2 text-xs">· Snatch focus</span></div>
+        <div class="hidden md:block text-zinc-400 text-xs">Elena V.</div>
+        <div class="hidden md:block text-zinc-500 text-xs font-mono">B</div>
+        <div class="hidden lg:block text-zinc-500 text-xs">ADV</div>
+        <div class="text-right text-xs text-zinc-500 font-mono">4/8</div>
+      </div>
+      
+      <div class="schedule-row grid grid-cols-[80px_1fr_120px_120px_100px_80px] border-b border-white/5 py-3 px-3 items-center text-sm hover:bg-[var(--accent)]/5">
+        <div class="font-mono text-[var(--accent)]">18:00</div>
+        <div><span class="text-zinc-200">Hypertrophy Block A</span><span class="text-zinc-600 ml-2 text-xs">· Push</span></div>
+        <div class="hidden md:block text-zinc-400 text-xs">Yuki H.</div>
+        <div class="hidden md:block text-zinc-500 text-xs font-mono">C</div>
+        <div class="hidden lg:block text-zinc-500 text-xs">INT</div>
+        <div class="text-right text-xs text-zinc-500 font-mono">10/14</div>
+      </div>
+      
+      <div class="schedule-row grid grid-cols-[80px_1fr_120px_120px_100px_80px] border-b border-white/5 py-3 px-3 items-center text-sm hover:bg-[var(--accent)]/5">
+        <div class="font-mono text-[var(--accent)]">19:00</div>
+        <div><span class="text-zinc-200">Endurance Run Club</span><span class="text-zinc-600 ml-2 text-xs">· 8km tempo</span></div>
+        <div class="hidden md:block text-zinc-400 text-xs">Amara O.</div>
+        <div class="hidden md:block text-zinc-500 text-xs font-mono">OUT</div>
+        <div class="hidden lg:block text-zinc-500 text-xs">ALL</div>
+        <div class="text-right text-xs text-zinc-500 font-mono">18/20</div>
+      </div>
+      
+      <div class="schedule-row grid grid-cols-[80px_1fr_120px_120px_100px_80px] border-b border-white/5 py-3 px-3 items-center text-sm hover:bg-[var(--accent)]/5">
+        <div class="font-mono text-[var(--accent)]">19:30</div>
+        <div><span class="text-zinc-200">Mobility & Recovery</span><span class="text-zinc-600 ml-2 text-xs">· FRC</span></div>
+        <div class="hidden md:block text-zinc-400 text-xs">Devon M.</div>
+        <div class="hidden md:block text-zinc-500 text-xs font-mono">D</div>
+        <div class="hidden lg:block text-zinc-500 text-xs">ALL</div>
+        <div class="text-right text-xs text-zinc-500 font-mono">6/16</div>
+      </div>
+      
+      <div class="schedule-row grid grid-cols-[80px_1fr_120px_120px_100px_80px] py-3 px-3 items-center text-sm hover:bg-[var(--accent)]/5">
+        <div class="font-mono text-[var(--accent)]">20:30</div>
+        <div><span class="text-zinc-200">Night Lift Open Gym</span><span class="text-zinc-600 ml-2 text-xs">· Coach on call</span></div>
+        <div class="hidden md:block text-zinc-400 text-xs">Rotating</div>
+        <div class="hidden md:block text-zinc-500 text-xs font-mono">ALL</div>
+        <div class="hidden lg:block text-zinc-500 text-xs">ALL</div>
+        <div class="text-right text-xs text-zinc-500 font-mono">22/40</div>
+      </div>
+    </div>
+    
+    <div class="mt-4 flex items-center justify-between text-xs font-mono text-zinc-500">
+      <div>SHOWING TODAY · MON 18.03 · 7 SESSIONS</div>
+      <a href="#booking" class="text-[var(--accent)] hover:underline tracking-wider">FULL WEEK SCHEDULE →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============== BOOKING / CTA ============== -->
+<section id="booking" class="relative py-24 bg-[var(--bg)] overflow-hidden">
+  <!-- Background image with overlay -->
+  <div class="absolute inset-0 z-0">
+    <img src="https://picsum.photos/seed/forge-cta-bg/1600/900.jpg" class="w-full h-full object-cover bw opacity-20" alt="">
+    <div class="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-black/70"></div>
+  </div>
+  
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10 relative z-10">
+    <div class="grid grid-cols-12 gap-8">
+      
+      <!-- Left: Pitch -->
+      <div class="col-span-12 lg:col-span-5">
+        <div class="section-label mb-5"><span>S06 · BEGIN</span></div>
+        <h2 class="font-display text-6xl lg:text-7xl leading-[0.85]">
+          YOUR FIRST<br>
+          SESSION<br>
+          <span class="text-[var(--accent)]">IS ON US.</span>
+        </h2>
+        
+        <p class="text-zinc-400 text-lg leading-relaxed mt-6 max-w-md">
+          One free trial class. Real coach. Real assessment. Real plan. Walk in with questions, walk out with a 12-week roadmap. No pressure — just data.
+        </p>
+        
+        <div class="mt-8 space-y-4">
+          <div class="num-list-item" data-num="01">
+            <div class="font-display text-xl">MOVEMENT SCREEN</div>
+            <div class="text-sm text-zinc-500">30-min assessment with a senior coach</div>
+          </div>
+          <div class="num-list-item" data-num="02">
+            <div class="font-display text-xl">TRIAL SESSION</div>
+            <div class="text-sm text-zinc-500">60-min class in your chosen program</div>
+          </div>
+          <div class="num-list-item" data-num="03">
+            <div class="font-display text-xl">ROADMAP MEETING</div>
+            <div class="text-sm text-zinc-500">Personalized 12-week plan with targets</div>
+          </div>
+          <div class="num-list-item" data-num="04">
+            <div class="font-display text-xl">DECIDE</div>
+            <div class="text-sm text-zinc-500">No contracts. No pressure. Just clarity.</div>
+          </div>
+        </div>
+        
+        <div class="mt-10 flex items-center gap-6">
+          <div class="flex -space-x-3">
+            <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-black">
+              <img src="https://picsum.photos/seed/avatar1/80/80.jpg" class="w-full h-full object-cover bw" alt="">
+            </div>
+            <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-black">
+              <img src="https://picsum.photos/seed/avatar2/80/80.jpg" class="w-full h-full object-cover bw" alt="">
+            </div>
+            <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-black">
+              <img src="https://picsum.photos/seed/avatar3/80/80.jpg" class="w-full h-full object-cover bw" alt="">
+            </div>
+            <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-black">
+              <img src="https://picsum.photos/seed/avatar4/80/80.jpg" class="w-full h-full object-cover bw" alt="">
+            </div>
+          </div>
+          <div>
+            <div class="font-display text-2xl text-[var(--accent)]">+340 THIS MONTH</div>
+            <div class="text-[10px] font-mono text-zinc-500 tracking-wider">TRIAL CLASSES BOOKED</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right: Form -->
+      <div class="col-span-12 lg:col-span-6 lg:col-start-7">
+        <div class="bg-zinc-950/80 backdrop-blur-md border border-white/10 p-8 lg:p-10">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <div class="font-mono text-[10px] text-[var(--accent)] tracking-[0.3em]">BOOK TRIAL</div>
+              <div class="font-display text-3xl mt-1">RESERVE YOUR SLOT</div>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-500">
+              <span class="w-1.5 h-1.5 bg-[var(--accent)] rounded-full pulse-dot"></span>
+              <span>14 SLOTS LEFT THIS WEEK</span>
+            </div>
+          </div>
+          
+          <form id="bookingForm" class="space-y-5">
+            <div class="grid grid-cols-2 gap-5">
+              <div>
+                <label class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">FULL NAME *</label>
+                <input type="text" placeholder="Alex Carter" required>
+              </div>
+              <div>
+                <label class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">PHONE *</label>
+                <input type="tel" placeholder="+1 (555) 000-0000" required>
+              </div>
+            </div>
+            
+            <div>
+              <label class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">EMAIL *</label>
+              <input type="email" placeholder="alex@example.com" required>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-5">
+              <div>
+                <label class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">PRIMARY GOAL *</label>
+                <select required>
+                  <option value="">Select goal</option>
+                  <option>Muscle Gain</option>
+                  <option>Fat Loss</option>
+                  <option>General Fitness</option>
+                  <option>Mobility / Recovery</option>
+                </select>
+              </div>
+              <div>
+                <label class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">EXPERIENCE *</label>
+                <select required>
+                  <option value="">Select level</option>
+                  <option>Beginner (0–1y)</option>
+                  <option>Intermediate (1–3y)</option>
+                  <option>Advanced (3y+)</option>
+                  <option>Athlete / Competitor</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-5">
+              <div>
+                <label class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">PREFERRED DATE *</label>
+                <input type="date" required>
+              </div>
+              <div>
+                <label class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">PREFERRED TIME *</label>
+                <select required>
+                  <option value="">Select time</option>
+                  <option>06:00 – 09:00 (Morning)</option>
+                  <option>12:00 – 14:00 (Lunch)</option>
+                  <option>17:00 – 20:00 (Evening)</option>
+                  <option>20:00 – 22:00 (Late)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <label class="font-mono text-[10px] text-zinc-500 tracking-[0.2em]">ANY INJURIES OR LIMITATIONS?</label>
+              <input type="text" placeholder="Optional — e.g. lower back, knee, shoulder">
+            </div>
+            
+            <div class="flex items-start gap-3 pt-2">
+              <input type="checkbox" id="consent" class="mt-1 accent-[var(--accent)]" required>
+              <label for="consent" class="text-xs text-zinc-500 leading-relaxed">
+                I consent to a movement assessment and acknowledge that Ironforge coaches may contact me regarding my trial booking. No payment required.
+              </label>
+            </div>
+            
+            <button type="submit" class="btn-primary w-full py-5 font-bold uppercase tracking-[0.2em] text-sm flex items-center justify-center gap-3 mt-4">
+              <span>CONFIRM TRIAL BOOKING</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            
+            <div class="flex items-center justify-center gap-4 text-[10px] font-mono text-zinc-600 tracking-wider pt-2">
+              <span><i class="fa-solid fa-shield-check text-[var(--accent)]"></i> NO PAYMENT</span>
+              <span>·</span>
+              <span><i class="fa-solid fa-clock text-[var(--accent)]"></i> 90 MIN TOTAL</span>
+              <span>·</span>
+              <span><i class="fa-solid fa-user-check text-[var(--accent)]"></i> 1-ON-1 COACH</span>
+            </div>
+          </form>
+          
+          <!-- Toast -->
+          <div id="toast" class="hidden mt-4 p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] text-sm flex items-center gap-3">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Booking received. A coach will reach out within 4 hours.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== FOOTER ============== -->
+<footer class="bg-zinc-950 border-t border-white/5 pt-16 pb-8">
+  <div class="max-w-[1600px] mx-auto px-6 lg:px-10">
+    
+    <!-- Top: massive logo text -->
+    <div class="border-b border-white/5 pb-12 mb-12">
+      <div class="font-display text-[clamp(4rem,16vw,15rem)] leading-[0.85] text-stroke-thin">
+        IRONFORGE.
+      </div>
+      <div class="flex flex-wrap items-end justify-between gap-6 mt-6">
+        <p class="text-zinc-500 max-w-md text-sm leading-relaxed">
+          A high-performance training studio. Built by athletes, engineered by science, refined by eleven years of results.
+        </p>
+        <div class="flex gap-3">
+          <a href="#" class="w-11 h-11 border border-white/10 flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="w-11 h-11 border border-white/10 flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"><i class="fa-brands fa-youtube"></i></a>
+          <a href="#" class="w-11 h-11 border border-white/10 flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"><i class="fa-brands fa-tiktok"></i></a>
+          <a href="#" class="w-11 h-11 border border-white/10 flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" class="w-11 h-11 border border-white/10 flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"><i class="fa-brands fa-strava"></i></a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer columns -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-12">
+      
+      <div>
+        <div class="font-mono text-[10px] text-zinc-600 tracking-[0.25em] mb-4">PROGRAMS</div>
+        <ul class="space-y-2 text-sm text-zinc-400">
+          <li><a href="#curriculum" class="hover:text-[var(--accent)] transition-colors">Hypertrophy Block</a></li>
+          <li><a href="#curriculum" class="hover:text-[var(--accent)] transition-colors">Metabolic Forge</a></li>
+          <li><a href="#curriculum" class="hover:text-[var(--accent)] transition-colors">Athletic Foundation</a></li>
+          <li><a href="#curriculum" class="hover:text-[var(--accent)] transition-colors">Olympic Lifting</a></li>
+          <li><a href="#curriculum" class="hover:text-[var(--accent)] transition-colors">Personal Training</a></li>
+        </ul>
+      </div>
+      
+      <div>
+        <div class="font-mono text-[10px] text-zinc-600 tracking-[0.25em] mb-4">STUDIO</div>
+        <ul class="space-y-2 text-sm text-zinc-400">
+          <li><a href="#coaches" class="hover:text-[var(--accent)] transition-colors">Coach Roster</a></li>
+          <li><a href="#schedule" class="hover:text-[var(--accent)] transition-colors">Class Schedule</a></li>
+          <li><a href="#stories" class="hover:text-[var(--accent)] transition-colors">Member Stories</a></li>
+          <li><a href="#" class="hover:text-[var(--accent)] transition-colors">Facility Tour</a></li>
+          <li><a href="#" class="hover:text-[var(--accent)] transition-colors">Equipment</a></li>
+        </ul>
+      </div>
+      
+      <div>
+        <div class="font-mono text-[10px] text-zinc-600 tracking-[0.25em] mb-4">MEMBERSHIP</div>
+        <ul class="space-y-2 text-sm text-zinc-400">
+          <li><a href="#booking" class="hover:text-[var(--accent)] transition-colors">Book Trial</a></li>
+          <li><a href="#" class="hover:text-[var(--accent)] transition-colors">Pricing</a></li>
+          <li><a href="#" class="hover:text-[var(--accent)] transition-colors">Corporate</a></li>
+          <li><a href="#" class="hover:text-[var(--accent)] transition-colors">Student</a></li>
+          <li><a href="#" class="hover:text-[var(--accent)] transition-colors">Refer a Friend</a></li>
+        </ul>
+      </div>
+      
+      <div>
+        <div class="font-mono text-[10px] text-zinc-600 tracking-[0.25em] mb-4">STUDIO</div>
+        <ul class="space-y-2 text-sm text-zinc-400">
+          <li>184 Iron Street</li>
+          <li>Downtown District</li>
+          <li>NY 10013</li>
+          <li><a href="tel:+12125550100" class="hover:text-[var(--accent)] transition-colors">+1 212 555 0100</a></li>
+          <li><a href="mailto:hello@ironforge.studio" class="hover:text-[var(--accent)] transition-colors">hello@ironforge.studio</a></li>
+        </ul>
+      </div>
+      
+      <div>
+        <div class="font-mono text-[10px] text-zinc-600 tracking-[0.25em] mb-4">HOURS</div>
+        <ul class="space-y-2 text-sm text-zinc-400">
+          <li class="flex justify-between gap-3"><span class="text-zinc-500">Mon–Fri</span><span>05:00 – 23:00</span></li>
+          <li class="flex justify-between gap-3"><span class="text-zinc-500">Sat</span><span>06:00 – 22:00</span></li>
+          <li class="flex justify-between gap-3"><span class="text-zinc-500">Sun</span><span>07:00 – 20:00</span></li>
+          <li class="flex justify-between gap-3"><span class="text-zinc-500">Holidays</span><span>08:00 – 16:00</span></li>
+          <li class="text-[var(--accent)] mt-2">24/7 MEMBER ACCESS</li>
+        </ul>
+      </div>
+      
+      <div>
+        <div class="font-mono text-[10px] text-zinc-600 tracking-[0.25em] mb-4">NEWSLETTER</div>
+        <p class="text-xs text-zinc-500 mb-3 leading-relaxed">Monthly protocol notes, member spotlights, no spam.</p>
+        <form class="flex gap-2" onsubmit="event.preventDefault();this.querySelector('input').value='';showToast('Subscribed.',this)">
+          <input type="email" placeholder="email@example.com" class="text-sm py-2">
+          <button class="bg-[var(--accent)] text-black px-4 py-2 font-bold text-sm"><i class="fa-solid fa-arrow-right"></i></button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Bottom bar -->
+    <div class="border-t border-white/5 pt-6 flex flex-wrap items-center justify-between gap-4 text-[10px] font-mono text-zinc-600 tracking-wider">
+      <div>© 2025 IRONFORGE TRAINING STUDIO · ALL RIGHTS RESERVED</div>
+      <div class="flex items-center gap-4">
+        <a href="#" class="hover:text-[var(--accent)] transition-colors">PRIVACY</a>
+        <a href="#" class="hover:text-[var(--accent)] transition-colors">TERMS</a>
+        <a href="#" class="hover:text-[var(--accent)] transition-colors">WAIVER</a>
+        <a href="#" class="hover:text-[var(--accent)] transition-colors">CAREERS</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-1.5 h-1.5 bg-[var(--accent)] rounded-full pulse-dot"></span>
+        <span>FACILITY ONLINE · 142 MEMBERS</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll progress
+  const progressBar = document.getElementById('scrollProgress');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const scrolled = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    progressBar.style.width = scrolled + '%';
+  });
+  
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      const top = s.offsetTop - 100;
+      if (window.scrollY >= top) current = s.id;
+    });
+    navLinks.forEach(l => {
+      l.classList.remove('active');
+      if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+    });
+  });
+  
+  // Reveal animation
+  const revealEls = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('in');
+    });
+  }, { threshold: 0.1 });
+  revealEls.forEach(el => observer.observe(el));
+  
+  // Number counter
+  const counters = document.querySelectorAll('.stat-number');
+  const counterObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseInt(el.dataset.target);
+        const duration = 1800;
+        const start = performance.now();
+        const update = (now) => {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = Math.floor(target * eased);
+          el.textContent = value.toLocaleString();
+          if (progress < 1) requestAnimationFrame(update);
+          else el.textContent = target.toLocaleString();
+        };
+        requestAnimationFrame(update);
+        counterObs.unobserve(el);
+      }
+    });
+  }, { threshold: 0.3 });
+  counters.forEach(c => counterObs.observe(c));
+  
+  // Form submit
+  function showToast(msg, ctx) {
+    const t = document.getElementById('toast') || ctx?.parentElement?.querySelector('[id^="toast"]');
+    if (t) {
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 4000);
+    } else {
+      // fallback for footer form
+      const div = document.createElement('div');
+      div.className = 'mt-2 text-xs text-[var(--accent)]';
+      div.textContent = msg;
+      ctx?.parentElement?.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
+  }
+  
+  document.getElementById('bookingForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const toast = document.getElementById('toast');
+    toast.classList.remove('hidden');
+    e.target.reset();
+    setTimeout(() => toast.classList.add('hidden'), 5000);
+  });
+  
+  // Parallax hero text (subtle)
+  const heroText = document.querySelector('.text-glow');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY < window.innerHeight && heroText) {
+      const offset = window.scrollY * 0.15;
+      heroText.style.transform = `translateY(${offset}px)`;
+    }
+  });
+</script>
+
+</body>
+</html>
